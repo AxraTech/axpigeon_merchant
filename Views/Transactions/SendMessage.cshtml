@@ -1,0 +1,207 @@
+﻿@using AxpigeonApp.Dao
+@model List<BrandNames>
+
+@{
+    ViewData["Title"] = "Send Message";
+    var hasFormContent = Context.Request.HasFormContentType;
+    var postedBrandId = hasFormContent ? Context.Request.Form["id"].ToString() : string.Empty;
+    var postedMessage = hasFormContent ? Context.Request.Form["message"].ToString() : string.Empty;
+    var postedPhone = hasFormContent ? Context.Request.Form["phone"].ToString() : string.Empty;
+    var isBulkPosted = hasFormContent && string.Equals(Context.Request.Form["isBulk"], "true", StringComparison.OrdinalIgnoreCase);
+}
+
+<h1>@ViewData["Title"]</h1>
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="/Transactions">Transaction List</a></li>
+        <li class="breadcrumb-item active">Send Message</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-center">
+    <div class="col-xxl-6 col-md-6 col-sm-8">
+        <div class="card mt-2">
+            <div class="card-header">
+                <h5 class="text-center">Single SMS / Bulk SMS</h5>
+            </div>
+
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    @Html.AntiForgeryToken()
+                    @if (TempData["Success"] != null)
+                    {
+                        <div class="alert alert-success" role="alert">
+                            @TempData["Success"]
+                        </div>
+                    }
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            @Html.ValidationSummary(false, "Please fix the highlighted form errors.")
+                        </div>
+                    }
+                    <div id="formAlert" class="alert alert-danger d-none" role="alert"></div>
+
+                    <!-- Brand -->
+                    <div class="form-floating mb-3">
+                        <select class="form-select" name="id" id="brandSelect" required>
+                            <option value="">Select a brand</option>
+                            @foreach (var brand in Model)
+                            {
+                                var isSelected = string.Equals(postedBrandId, brand.id.ToString(), StringComparison.OrdinalIgnoreCase);
+                                <option value="@brand.id" selected="@(isSelected ? "selected" : null)">@brand.brand_name</option>
+                            }
+                        </select>
+                        <label>Brand Name</label>
+                        @Html.ValidationMessage("id", "", new { @class = "text-danger small" })
+                    </div>
+
+                    <!-- Message -->
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control"
+                                  name="message"
+                                  style="height:120px"
+                                  placeholder="Message"
+                                  required>@postedMessage</textarea>
+                        <label>Message</label>
+                        @Html.ValidationMessage("message", "", new { @class = "text-danger small" })
+                    </div>
+
+                    <!-- Bulk Switch -->
+                    <div class="form-check form-switch mb-2">
+                        <input class="form-check-input"
+                               type="checkbox"
+                               id="switcher"
+                               name="isBulk"
+                               value="true"
+                               checked="@(isBulkPosted ? "checked" : null)">
+                        <label class="form-check-label">Bulk SMS</label>
+                        
+                    </div>
+                    <div class="mb-2">
+                        <span><a href=" @Url.Action("DownloadTemplate", "Transactions")" style="color: darkblue" class="fw-bold">Download</a>  excel template for bulk sms</span>
+                    </div>
+
+                    <!-- Phone -->
+                    <div id="phoneInputParent" style="display:@(isBulkPosted ? "none" : "block")">
+                        <div class="form-floating mb-3">
+                            <input type="text"
+                                   class="form-control"
+                                   name="phone"
+                                   id="phoneInput"
+                                   placeholder="Phone"
+                                   value="@postedPhone">
+                            <label>Phone Number</label>
+                        </div>
+                        @Html.ValidationMessage("phone", "", new { @class = "text-danger small" })
+                    </div>
+
+                    <!-- Excel -->
+                    <div id="fileUploadParent" style="display:@(isBulkPosted ? "block" : "none")">
+                        <div class="form-floating mb-3">
+                            <input type="file"
+                                   class="form-control"
+                                   name="excelFile"
+                                   id="fileUpload">
+                            <label>Upload Excel</label>
+                        </div>
+                        @Html.ValidationMessage("excelFile", "", new { @class = "text-danger small" })
+                    </div>
+
+                    
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        Submit
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const form = document.querySelector('form[method="post"]');
+        const switcher = document.getElementById('switcher');
+        const fileUploadParent = document.getElementById('fileUploadParent');
+        const phoneInputParent = document.getElementById('phoneInputParent');
+        const phoneInput = document.getElementById('phoneInput');
+        const fileUpload = document.getElementById('fileUpload');
+        const brandSelect = document.getElementById('brandSelect');
+        const messageInput = document.querySelector('textarea[name="message"]');
+        const formAlert = document.getElementById('formAlert');
+
+        function showAlert(message) {
+            formAlert.textContent = message;
+            formAlert.classList.remove('d-none');
+        }
+
+        function hideAlert() {
+            formAlert.textContent = '';
+            formAlert.classList.add('d-none');
+        }
+
+        function applyMode() {
+            if (switcher.checked) {
+                fileUploadParent.style.display = 'block';
+                phoneInputParent.style.display = 'none';
+                phoneInput.disabled = true;
+                phoneInput.required = false;
+                fileUpload.required = true;
+            } else {
+                phoneInputParent.style.display = 'block';
+                fileUploadParent.style.display = 'none';
+                phoneInput.disabled = false;
+                phoneInput.required = true;
+                fileUpload.required = false;
+            }
+        }
+
+        switcher.addEventListener('change', function () {
+            hideAlert();
+            applyMode();
+        });
+
+        form.addEventListener('submit', function (event) {
+            const isBulk = switcher.checked;
+            const phoneRegex = /^\d{7,15}$/;
+            const selectedFile = fileUpload.files && fileUpload.files.length > 0 ? fileUpload.files[0] : null;
+            const extension = selectedFile ? selectedFile.name.split('.').pop().toLowerCase() : '';
+
+            hideAlert();
+
+            if (!brandSelect.value) {
+                event.preventDefault();
+                showAlert('Please select a brand.');
+                return;
+            }
+
+            if (!messageInput.value.trim()) {
+                event.preventDefault();
+                showAlert('Please enter a message.');
+                return;
+            }
+
+            if (isBulk) {
+                if (!selectedFile) {
+                    event.preventDefault();
+                    showAlert('Please upload an Excel file for bulk SMS.');
+                    return;
+                }
+
+                if (extension !== 'xlsx' && extension !== 'xls') {
+                    event.preventDefault();
+                    showAlert('Only .xlsx or .xls files are allowed.');
+                    return;
+                }
+            } else if (!phoneRegex.test(phoneInput.value.trim())) {
+                event.preventDefault();
+                showAlert('Phone number must contain only digits (7 to 15 digits).');
+            }
+        });
+
+        applyMode();
+    })();
+</script>

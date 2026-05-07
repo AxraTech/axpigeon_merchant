@@ -1,0 +1,214 @@
+﻿@using AxpigeonApp.Dao
+@using System.Globalization
+@{
+    ViewData["Title"] = "Transactions";
+    @model PaginatedList<TransactionListDao>
+    var index = (Model.Page - 1) * Model.PageSize + 1;
+    int totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+}
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Transaction List</li>
+    </ol>
+</nav>
+<div class="card">
+    <div class="card-header justify-content-between">
+        <h5 class="card-title"> Recent Transactions</h5>
+
+    </div>
+
+    <div class="card-body">
+
+          <!-- Pagination Top -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">
+                Showing page @Model.Page of @totalPages
+            </span>
+
+            <nav>
+                <ul class="pagination mb-0">
+
+                    <!-- Previous -->
+                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.Page - 1)&pageSize=@Model.PageSize">
+                            Previous
+                        </a>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link" href="?page=@p&pageSize=@Model.PageSize">@p</a>
+                        </li>
+                    }
+
+                    <!-- Next -->
+                    <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.Page + 1)&pageSize=@Model.PageSize">
+                            Next
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+        <!-- End Pagination Top -->
+
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="align-middle thead-sm">
+                    <tr class="text-uppercase fs-xxs">
+                        <th>#</th>
+                        <th>MID</th>
+                        <th>BrandName</th>
+                        <th>Phone</th>
+                        <th>Message</th>
+                        <th>Operator</th>
+                        <th>Type</th>
+                        <th>Provider</th>
+                        <th>Sent At</th>
+                        <th>Status</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.Items)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@u.transaction_id</td>
+                            <td>@u.brand_name</td>
+                            <td>@u.phone</td>
+
+                            <td>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <span id="messageContent-@index">********</span>
+
+                                    
+
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-view ms-2"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#checkModal"
+                                            data-password="@u.msgPassword"
+                                            data-message="@u.message" data-id="messageContent-@index">
+                                        <i data-lucide="eye-off"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+                            
+                            <td>
+                                @(string.IsNullOrEmpty(u.operator_name)
+                                                            ? ""
+                                                            : u.operator_name.Split('_')[0])
+                            </td>
+                            <td>@u.sms_type</td>
+                            
+                            <td>
+                                <span class="badge badge-label rounded-1 @(u.provider_name == "mytel" ? "bg-warning" : u.provider_name == "atom" ? "bg-info" : u.provider_name == "u9" ? "bg-danger" : "bg-secondary")">
+                                    @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(u.provider_name.ToLower())
+                                </span>
+
+                            </td>
+                            <td>@u.sent_at</td>
+                            <td>
+                                <span class="badge badge-label rounded-1 @(u.status == "SUCCESS" ? "bg-success" : u.status == "INVALID" ? "bg-danger" : u.status == "INSUFFICIENT" ? "bg-warning" : "bg-primary")">
+                                    @u.status
+                                </span>
+
+                            </td>
+
+                        </tr>
+                        index++;
+                    }
+                
+                </tbody>
+            </table>
+
+             </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="checkModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Verify Password</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input id="passwordInput"
+                       type="password"
+                       class="form-control"
+                       placeholder="Enter password">
+
+                <small id="errorText"
+                       class="text-danger d-none">
+                    Wrong password
+                </small>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Close
+                </button>
+                <button class="btn btn-primary" id="btnCheck">
+                    Check
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        let currentPassword = "";
+        let currentMessage = "";
+        let targetSpanId = "";
+
+        document.querySelectorAll(".btn-view").forEach(btn => {
+            btn.addEventListener("click", function () {
+
+                currentPassword = this.dataset.password;
+                currentMessage = this.dataset.message;
+                targetSpanId = this.dataset.id;
+
+                document.getElementById("passwordInput").value = "";
+                document.getElementById("errorText").classList.add("d-none");
+            });
+        });
+
+        document.getElementById("btnCheck").addEventListener("click", function () {
+
+            const input = document.getElementById("passwordInput").value;
+
+            if (input === currentPassword) {
+
+                document.getElementById(targetSpanId).innerText =
+                    currentMessage;
+
+                bootstrap.Modal.getInstance(
+                    document.getElementById("checkModal")
+                ).hide();
+
+            } else {
+                document.getElementById("errorText")
+                    .classList.remove("d-none");
+            }
+        });
+
+    });
+</script>

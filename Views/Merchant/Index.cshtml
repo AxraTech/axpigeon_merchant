@@ -1,0 +1,323 @@
+﻿@using AxpigeonApp.Dao
+@using System.Globalization
+@{
+    var branches = Model?.Items ?? new List<BranchDao>();
+
+    int totalAtom = 0, usedAtom = 0;
+    int totalMytel = 0, usedMytel = 0;
+    int totalMpt = 0, usedMpt = 0;
+    int totalU9 = 0, usedU9 = 0;
+    int totalMec = 0, usedMec = 0;
+
+    if (branches.Any())
+    {
+        usedAtom = branches.Sum(x => int.TryParse(x.atom, out var v) ? v : 0);
+        totalAtom = branches.Sum(x => int.TryParse(x.purchase_atom, out var v) ? v : 0);
+
+        usedMytel = branches.Sum(x => int.TryParse(x.mytel, out var v) ? v : 0);
+        totalMytel = branches.Sum(x => int.TryParse(x.purchase_mytel, out var v) ? v : 0);
+
+        usedMpt = branches.Sum(x => int.TryParse(x.mpt, out var v) ? v : 0);
+        totalMpt = branches.Sum(x => int.TryParse(x.purchase_mpt, out var v) ? v : 0);
+
+        usedU9 = branches.Sum(x => int.TryParse(x.u9, out var v) ? v : 0);
+        totalU9 = branches.Sum(x => int.TryParse(x.purchase_u9, out var v) ? v : 0);
+
+        usedMec = branches.Sum(x => int.TryParse(x.mec, out var v) ? v : 0);
+        totalMec = branches.Sum(x => int.TryParse(x.purchase_mec, out var v) ? v : 0);
+    }
+}
+
+@{
+    ViewData["Title"] = "Merchant";
+    @model PaginatedList<BranchDao>
+    var index = (Model.Page - 1) * Model.PageSize + 1;
+    int totalPages = (int)Math.Ceiling((double)Model.TotalCount / Model.PageSize);
+
+}
+
+<div class="row row-cols-xxl-5 row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 mt-2">
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">Mytel</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMytel - usedMytel)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMytel">@usedMytel</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMytel
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">Atom</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalAtom - usedAtom)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedAtom">@usedAtom</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalAtom
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">U9</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalU9 - usedU9)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedU9">@usedU9</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalU9
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">MPT</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMpt - usedMpt)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMpt">@usedMpt</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMpt
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">MEC</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMec - usedMec)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMec">@usedMec</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMec
+            </div>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Merchant List</li>
+    </ol>
+</nav>
+<div class="card">
+    <div class="card-header justify-content-between">
+        <h5 class="card-title"> Merchant List</h5>
+        <a href="/Merchant/Create" class="btn btn-sm btn-primary">
+            <i class="ti ti-plus me-1"></i>  Add New
+        </a>
+    </div>
+
+    <div class="card-body">
+
+        <!-- Pagination Top -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">
+                Showing page @Model.Page of @totalPages
+            </span>
+
+            <nav>
+                <ul class="pagination mb-0">
+
+                    <!-- Previous -->
+                    <li class="page-item @(Model.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.Page - 1)&pageSize=@Model.PageSize">
+                            Previous
+                        </a>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.Page ? "active" : "")">
+                            <a class="page-link" href="?page=@p&pageSize=@Model.PageSize">@p</a>
+                        </li>
+                    }
+
+                    <!-- Next -->
+                    <li class="page-item @(Model.Page >= totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.Page + 1)&pageSize=@Model.PageSize">
+                            Next
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+        <!-- End Pagination Top -->
+       
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="align-middle thead-sm">
+                    <tr class="text-uppercase fs-xxs">
+                        <th>#</th>
+                        <th>Merchant Name</th>
+                        <th>Brand Name</th>
+                        <th>Email</th>
+                        <th>Mytel</th>
+                        <th>Atom</th>
+                        <th>U9</th>
+                        <th>Mpt</th>
+                        @* <th>Service Provider</th> *@
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.Items != null && Model.Items.Any())
+                    {
+                        @foreach (var u in Model.Items)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>@u.merchant_name</td>
+                                <td>@u.brand_name</td>
+                                <td>@u.email</td>
+                                <td>@u.mytel</td>
+                                <td>@u.atom</td>
+                                <td>@u.u9</td>
+                                <td>@u.mpt</td>
+                                @* <td>
+                                    <span class="badge badge-label rounded-1 @(u.provider_name == "mytel" ? "bg-warning" : u.provider_name == "atom" ? "bg-info" : u.provider_name == "u9" ? "bg-danger" : "bg-secondary")">
+                                        @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(u.provider_name.ToLower())
+                                    </span>
+
+                                </td> *@
+                                <td>
+                                    <span class="badge badge-label rounded-1 @(u.status == "SUCCESS" ? "bg-success" : u.status == "PENDING" ? "bg-warning" : u.status == "SUSPEND" ? "bg-danger" : "bg-secondary")">
+                                        @(u.status == "SUCCESS" ? "Active" : u.status == "PENDING" ? "Pending" : u.status == "SUSPEND" ? "Suspend" : "Unknow")
+                                    </span>
+
+                                </td>
+                                
+
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="10" class="text-center text-muted py-4">
+                                No Sub Merchants Found
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+            </table>
+
+        </div>
+    </div> <!-- end card-body-->
+</div> <!-- end card-->

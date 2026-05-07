@@ -1,0 +1,406 @@
+﻿@using AxpigeonApp.Dao
+@using System.Globalization
+@{
+    ViewData["Title"] = "Dashboard";
+    @model DashboardDao;
+    var index = (Model.transactions.Page - 1) * Model.transactions.PageSize + 1;
+    int totalPages = (int)Math.Ceiling((double)Model.transactions.TotalCount / Model.transactions.PageSize);
+
+    var branches = Model.packageList ?? new List<DashboardSmsPackages>();
+
+    int totalAtom = 0, usedAtom = 0;
+    int totalMytel = 0, usedMytel = 0;
+    int totalMpt = 0, usedMpt = 0;
+    int totalU9 = 0, usedU9 = 0;
+    int totalMec = 0, usedMec = 0;
+
+    if (branches.Any())
+    {
+        usedAtom = branches.Sum(x => int.TryParse(x.atom, out var v) ? v : 0);
+        totalAtom = branches.Sum(x => int.TryParse(x.purchase_atom, out var v) ? v : 0);
+
+        usedMytel = branches.Sum(x => int.TryParse(x.mytel, out var v) ? v : 0);
+        totalMytel = branches.Sum(x => int.TryParse(x.purchase_mytel, out var v) ? v : 0);
+
+        usedMpt = branches.Sum(x => int.TryParse(x.mpt, out var v) ? v : 0);
+        totalMpt = branches.Sum(x => int.TryParse(x.purchase_mpt, out var v) ? v : 0);
+
+        usedU9 = branches.Sum(x => int.TryParse(x.u9, out var v) ? v : 0);
+        totalU9 = branches.Sum(x => int.TryParse(x.purchase_u9, out var v) ? v : 0);
+
+        usedMec = branches.Sum(x => int.TryParse(x.mec, out var v) ? v : 0);
+        totalMec = branches.Sum(x => int.TryParse(x.purchase_mec, out var v) ? v : 0);
+    }
+
+}
+
+<div class="row row-cols-xxl-5 row-cols-lg-4 row-cols-md-3 row-cols-sm-2 row-cols-1 mt-2">
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">Mytel</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMytel - usedMytel)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMytel">@usedMytel</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMytel
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">Atom</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalAtom - usedAtom)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedAtom">@usedAtom</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalAtom
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">U9</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalU9 - usedU9)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedU9">@usedU9</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalU9
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">MPT</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMpt - usedMpt)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMpt">@usedMpt</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMpt
+            </div>
+        </div>
+    </div>
+
+    <div class="col">
+        <div class="card card-h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <h5 class="text-uppercase mb-3">MEC</h5>
+
+                    </div>
+                    <div>
+                        <i data-lucide="message-square" class="text-muted fs-24 svg-sw-10"></i>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-evenly align-items-center ">
+
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span>@(totalMec - usedMec)</span></h3>
+                        <p class="text-muted mb-2">Total Used</p>
+                    </div>
+                    <div>
+                        <h3 class="mb-0 fw-normal"><span data-target="@usedMec">@usedMec</span></h3>
+                        <p class="text-muted mb-2">Total Available  </p>
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="card-footer text-muted text-center">
+                Total SMS - @totalMec
+            </div>
+        </div>
+    </div>
+
+
+
+
+</div>
+
+
+<div class="card">
+    <div class="card-header justify-content-between">
+        <h5 class="card-title"> Recent Transactions</h5>
+
+    </div>
+
+    <div class="card-body">
+
+          <!-- Pagination Top -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">
+                Showing page @Model.transactions.Page of @totalPages
+            </span>
+
+            <nav>
+                <ul class="pagination mb-0">
+
+                    <!-- Previous -->
+                    <li class="page-item @(Model.transactions.Page <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.transactions.Page - 1)&pageSize=@Model.transactions.PageSize">
+                            Previous
+                        </a>
+                    </li>
+
+                    <!-- Page Numbers -->
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == Model.transactions.Page ? "active" : "")">
+                            <a class="page-link" href="?page=@p&pageSize=@Model.transactions.PageSize">@p</a>
+                        </li>
+                    }
+
+                    <!-- Next -->
+                    <li class="page-item @(Model.transactions.Page >= totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(Model.transactions.Page + 1)&pageSize=@Model.transactions.PageSize">
+                            Next
+                        </a>
+                    </li>
+
+                </ul>
+            </nav>
+        </div>
+        <!-- End Pagination Top -->
+
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="align-middle thead-sm">
+                    <tr class="text-uppercase fs-xxs">
+                        <th>#</th>
+                        <th>MID</th>
+                        <th>BrandName</th>
+                        <th>Phone</th>
+                        <th>Message</th>
+                        <th>Operator</th>
+                        <th>Type</th>
+                        <th>Provider</th>
+                        <th>Sent At</th>
+                        <th>Status</th>
+
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var u in Model.transactions.Items)
+                    {
+                        <tr>
+                            <td>@index</td>
+                            <td>@u.transaction_id</td>
+                            <td>@u.brand_name</td>
+                            <td>@u.phone</td>
+
+                            
+                            <td>
+                                <div class="d-flex justify-content-center align-items-center">
+                                    <span id="messageContent-@index">********</span>
+
+
+
+
+                                    <button type="button"
+                                            class="btn btn-sm btn-view ms-2"
+                                            data-bs-toggle="modal"
+                                            data-bs-target="#checkModal"
+                                            data-password="@u.msgPassword"
+                                            data-message="@u.message" data-id="messageContent-@index">
+                                        <i data-lucide="eye-off"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                @(string.IsNullOrEmpty(u.operator_name)
+                                                            ? ""
+                                                            : u.operator_name.Split('_')[0])
+                            </td>
+                            <td>@u.sms_type</td>
+
+                            <td>
+                                <span class="badge badge-label rounded-1 @(u.provider_name == "mytel" ? "bg-warning" : u.provider_name == "atom" ? "bg-info" : u.provider_name == "u9" ? "bg-danger" : "bg-secondary")">
+                                    @CultureInfo.CurrentCulture.TextInfo.ToTitleCase(u.provider_name.ToLower())
+                                </span>
+
+                            </td>
+                            <td>@u.sent_at</td>
+                            <td>
+                                <span class="badge badge-label rounded-1 @(u.status == "SUCCESS" ? "bg-success" : u.status == "INVALID" ? "bg-danger" : u.status == "INSUFFICIENT" ? "bg-warning" : "bg-primary")">
+                                    @u.status
+                                </span>
+
+                            </td>
+
+                        </tr>
+                        index++;
+                    }
+
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="checkModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Verify Password</h5>
+                <button class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <input id="passwordInput"
+                       type="password"
+                       class="form-control"
+                       placeholder="Enter password">
+
+                <small id="errorText"
+                       class="text-danger d-none">
+                    Wrong password
+                </small>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Close
+                </button>
+                <button class="btn btn-primary" id="btnCheck">
+                    Check
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= SCRIPT ================= -->
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+
+        let currentPassword = "";
+        let currentMessage = "";
+        let targetSpanId = "";
+
+        document.querySelectorAll(".btn-view").forEach(btn => {
+            btn.addEventListener("click", function () {
+
+                currentPassword = this.dataset.password;
+                currentMessage = this.dataset.message;
+                targetSpanId = this.dataset.id;
+
+                document.getElementById("passwordInput").value = "";
+                document.getElementById("errorText").classList.add("d-none");
+            });
+        });
+
+        document.getElementById("btnCheck").addEventListener("click", function () {
+
+            const input = document.getElementById("passwordInput").value;
+
+            if (input === currentPassword) {
+
+                document.getElementById(targetSpanId).innerText =
+                    currentMessage;
+
+                bootstrap.Modal.getInstance(
+                    document.getElementById("checkModal")
+                ).hide();
+
+            } else {
+                document.getElementById("errorText")
+                    .classList.remove("d-none");
+            }
+        });
+
+    });
+</script>
+
+
+
+

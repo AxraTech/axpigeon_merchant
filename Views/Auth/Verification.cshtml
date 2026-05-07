@@ -1,0 +1,68 @@
+﻿@{
+    ViewData["Title"] = "OTP Verification";
+    Layout = "_AuthLayout";
+}
+<div class="row justify-content-center">
+    <div class="col-xxl-4 col-md-6 col-sm-8">
+        <div class="card">
+            <div class="card-body">
+                <div class="auth-brand mb-4">
+                    <a href="index.html" class="logo-dark">
+                        <span class="d-flex align-items-center gap-1">
+                            <span class="avatar avatar-xs rounded-circle text-bg-dark">
+                                <span class="avatar-title">
+                                    <i data-lucide="sparkles" class="fs-md"></i>
+                                </span>
+                            </span>
+                            <span class="logo-text text-body fw-bold fs-xl">Axpigeon</span>
+                        </span>
+                    </a>
+                    <a href="index.html" class="logo-light">
+                        <span class="d-flex align-items-center gap-1">
+                            <span class="avatar avatar-xs rounded-circle text-bg-dark">
+                                <span class="avatar-title">
+                                    <i data-lucide="sparkles" class="fs-md"></i>
+                                </span>
+                            </span>
+                            <span class="logo-text text-white fw-bold fs-xl">Axpigeon</span>
+                        </span>
+                    </a>
+                    <p class="text-muted w-lg-75 mt-3">We've emailed you a 6-digit verification code we sent to</p>
+                </div>
+
+                <div class="text-center mb-4">
+                    <div class="fw-bold fs-4">+ (12) ******6789</div>
+                </div>
+
+                <form>
+                    <label class="form-label">Enter your 6-digit code <span class="text-danger">*</span></label>
+                    <div class="d-flex gap-2 mb-3 two-factor">
+                        <input type="text" class="form-control text-center" required>
+                        <input type="text" class="form-control text-center" required>
+                        <input type="text" class="form-control text-center" required>
+                        <input type="text" class="form-control text-center" required>
+                        <input type="text" class="form-control text-center" required>
+                        <input type="text" class="form-control text-center" required>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary fw-semibold py-2">Confirm</button>
+                    </div>
+                </form>
+
+                <p class="mt-4 text-muted text-center mb-4">Don’t have a code? <a href="#"
+                                                                                      class="text-decoration-underline link-offset-2 fw-semibold">Resend</a> </p>
+                    <p class="text-muted text-center mb-0">
+                        Return to <a href="/Auth/Login" class="text-decoration-underline link-offset-3 fw-semibold">Sign
+                        in</a>
+                    </p>
+                </div>
+            </div>
+
+            <p class="text-center text-muted mt-4 mb-0">
+                ©
+                <script>document.write(new Date().getFullYear())</script> Aung Nyein Htet — by <span
+                class="fw-semibold">AXRA TECH</span>
+            </p>
+        </div>
+    </div>

@@ -1,0 +1,28 @@
+﻿@{
+    ViewData["Title"] = "Access Denied";
+    Layout = "_AuthLayout";
+}
+<div class="row justify-content-center">
+    <div class="col-xxl-4 col-md-6 col-sm-8">
+        <div class="card">
+            <div class="card-body">
+
+                <div class="p-2 text-center">
+                    <div class="text-error fw-bold fs-60">403</div>
+                    <h3 class="fw-semibold">Access Denied</h3>
+                    <p class="text-muted">You are not unthorized.</p>
+
+                    <button class="btn btn-primary mt-3 rounded-pill" onclick="window.location.href='/Auth/Login'">Go
+                        Home</button>
+
+                    </div>
+                </div>
+            </div>
+
+            <p class="text-center text-muted mt-4 mb-0">
+                ©
+                <script>document.write(new Date().getFullYear())</script> Powered by <span class="fw-semibold">AXRA
+                TECH</span>
+            </p>
+        </div>
+    </div>
