@@ -1,7 +1,16 @@
+using AxpigeonApp.Configuration;
 using AxpigeonApp.Extensions;
 using OfficeOpenXml;
 
+EnvConfiguration.LoadDotEnv();
+
 var builder = WebApplication.CreateBuilder(args);
+
+var envOverrides = EnvConfiguration.BuildConfigurationOverrides();
+if (envOverrides.Count > 0)
+{
+    builder.Configuration.AddInMemoryCollection(envOverrides);
+}
 
 var envPath = Path.Combine(Directory.GetCurrentDirectory(), ".env");
 if (File.Exists(envPath))
