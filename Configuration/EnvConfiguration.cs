@@ -43,6 +43,10 @@ public static class EnvConfiguration
         if (!string.IsNullOrWhiteSpace(jwtAudience))
             overrides["Jwt:Audience"] = jwtAudience;
 
+        var apiBaseUrl = Environment.GetEnvironmentVariable("API_BASE_URL");
+        if (!string.IsNullOrWhiteSpace(apiBaseUrl))
+            overrides["AxpigeonApi:BaseUrl"] = apiBaseUrl.TrimEnd('/');
+
         return overrides;
     }
 }

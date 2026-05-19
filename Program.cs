@@ -38,6 +38,8 @@ if (File.Exists(envPath))
     builder.Configuration["Jwt:Key"] = Environment.GetEnvironmentVariable("JWT_KEY") ?? "";
     builder.Configuration["Jwt:Issuer"] = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? "";
     builder.Configuration["Jwt:Audience"] = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? "";
+    builder.Configuration["AxpigeonApi:BaseUrl"] =
+        (Environment.GetEnvironmentVariable("API_BASE_URL") ?? "").TrimEnd('/');
 }
 
 ExcelPackage.License.SetNonCommercialPersonal("AxpigeonApp");

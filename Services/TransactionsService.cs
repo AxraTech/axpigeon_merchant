@@ -13,11 +13,16 @@ namespace AxpigeonApp.Services
     {
         private readonly HttpClient _httpClient;
         private readonly ITransactionsRepository _repo;
+        private readonly string _apiBaseUrl;
 
-        public TransactionsService(HttpClient httpClient, ITransactionsRepository repo)
+        public TransactionsService(HttpClient httpClient, ITransactionsRepository repo, IConfiguration config)
         {
             _httpClient = httpClient;
             _repo = repo;
+            _apiBaseUrl = config["AxpigeonApi:BaseUrl"]
+                ?? throw new InvalidOperationException("AxpigeonApi:BaseUrl is not configured.");
+            if (string.IsNullOrWhiteSpace(_apiBaseUrl))
+                throw new InvalidOperationException("AxpigeonApi:BaseUrl is not configured.");
         }
 
         public async Task<PaginatedList<TransactionListDao>> GetAllTransactions(Guid userId, int page, int pageSize)
@@ -188,7 +193,7 @@ namespace AxpigeonApp.Services
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                "https://api.axpigeon.com/api/sms/bulk"
+                $"{_apiBaseUrl}/api/sms/bulk"
             );
 
             request.Headers.Authorization =
@@ -274,7 +279,7 @@ namespace AxpigeonApp.Services
 
             using var request = new HttpRequestMessage(
                 HttpMethod.Post,
-                "https://api.axpigeon.com/api/sms/send"
+                $"{_apiBaseUrl}/api/sms/send"
             );
 
             request.Headers.Authorization =
@@ -344,7 +349,7 @@ namespace AxpigeonApp.Services
             };
 
             var response = await _httpClient.PostAsJsonAsync(
-                "https://api.axpigeon.com/api/auth/login", // 🔁 replace with real URL
+                $"{_apiBaseUrl}/api/auth/login",
                 requestBody
             );
 
