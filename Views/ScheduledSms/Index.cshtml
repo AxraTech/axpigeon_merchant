@@ -1,0 +1,176 @@
+@using AxpigeonApp.Dao
+@model ScheduledSmsListResponseDao
+
+@{
+    ViewData["Title"] = "Scheduled SMS";
+    int page = (int)(ViewBag.CurrentPage ?? 1);
+    int pageSize = (int)(ViewBag.PageSize ?? 10);
+    string statusFilter = ViewBag.StatusFilter as string ?? "";
+    int totalPages = Model.totalCount > 0 ? (int)Math.Ceiling((double)Model.totalCount / pageSize) : 1;
+    int index = (page - 1) * pageSize + 1;
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+        <li class="breadcrumb-item active" aria-current="page">Scheduled SMS</li>
+    </ol>
+</nav>
+
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Scheduled SMS</h5>
+        <a href="/ScheduledSms/Create" class="btn btn-primary btn-sm">
+            <i data-lucide="plus" class="me-1" style="width:16px;height:16px;"></i>
+            Schedule New
+        </a>
+    </div>
+
+    <div class="card-body">
+        @if (TempData["Success"] != null)
+        {
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                @TempData["Success"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+        @if (TempData["Error"] != null)
+        {
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                @TempData["Error"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        }
+
+        <!-- Status Filter -->
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <form method="get" class="d-flex gap-2">
+                    <select name="status" class="form-select form-select-sm">
+                        <option value="">All Statuses</option>
+                        <option value="PENDING" selected="@(statusFilter == "PENDING" ? "selected" : null)">Pending</option>
+                        <option value="PROCESSING" selected="@(statusFilter == "PROCESSING" ? "selected" : null)">Processing</option>
+                        <option value="COMPLETED" selected="@(statusFilter == "COMPLETED" ? "selected" : null)">Completed</option>
+                        <option value="FAILED" selected="@(statusFilter == "FAILED" ? "selected" : null)">Failed</option>
+                        <option value="CANCELLED" selected="@(statusFilter == "CANCELLED" ? "selected" : null)">Cancelled</option>
+                    </select>
+                    <input type="hidden" name="pageSize" value="@pageSize" />
+                    <button type="submit" class="btn btn-sm btn-outline-primary">Filter</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pagination Top -->
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <span class="text-muted">
+                Showing page @(page) of @totalPages (@Model.totalCount total)
+            </span>
+            <nav>
+                <ul class="pagination mb-0">
+                    <li class="page-item @(page <= 1 ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(page - 1)&pageSize=@pageSize&status=@statusFilter">
+                            Previous
+                        </a>
+                    </li>
+                    @for (int p = 1; p <= totalPages; p++)
+                    {
+                        <li class="page-item @(p == page ? "active" : "")">
+                            <a class="page-link"
+                               href="?page=@p&pageSize=@pageSize&status=@statusFilter">@p</a>
+                        </li>
+                    }
+                    <li class="page-item @(page >= totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                           href="?page=@(page + 1)&pageSize=@pageSize&status=@statusFilter">
+                            Next
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="align-middle thead-sm">
+                    <tr class="text-uppercase fs-xxs">
+                        <th>#</th>
+                        <th>Brand</th>
+                        <th>Type</th>
+                        <th>Recipients</th>
+                        <th>Scheduled At</th>
+                        <th>Status</th>
+                        <th>Sent / Failed</th>
+                        <th>Created At</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (Model.items != null && Model.items.Count > 0)
+                    {
+                        @foreach (var item in Model.items)
+                        {
+                            <tr>
+                                <td>@index</td>
+                                <td>@item.brandName</td>
+                                <td>
+                                    <span class="badge badge-label rounded-1 @(item.smsType == "BULK" ? "bg-info" : "bg-primary")">
+                                        @item.smsType
+                                    </span>
+                                </td>
+                                <td>@item.totalRecipients</td>
+                                <td>@FormatDateTime(item.scheduledAt)</td>
+                                <td>
+                                    <span class="badge badge-label rounded-1 @GetStatusBadgeClass(item.scheduleStatus)">
+                                        @item.scheduleStatus
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="text-success">@item.sentCount</span> /
+                                    <span class="text-danger">@item.failedCount</span>
+                                </td>
+                                <td>@FormatDateTime(item.createdAt)</td>
+                                <td>
+                                    <a href="/ScheduledSms/Detail/@item.scheduleId"
+                                       class="btn btn-sm btn-outline-primary">
+                                        View
+                                    </a>
+                                </td>
+                            </tr>
+                            index++;
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="9" class="text-center text-muted py-4">
+                                No scheduled SMS found.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string status) => status switch
+    {
+        "PENDING" => "bg-warning",
+        "PROCESSING" => "bg-info",
+        "COMPLETED" => "bg-success",
+        "SENT" => "bg-success",
+        "FAILED" => "bg-danger",
+        "CANCELLED" => "bg-secondary",
+        _ => "bg-primary"
+    };
+
+    string FormatDateTime(string dateStr)
+    {
+        if (string.IsNullOrWhiteSpace(dateStr)) return "-";
+        if (DateTime.TryParse(dateStr, out var dt))
+            return dt.ToString("yyyy-MM-dd HH:mm");
+        return dateStr;
+    }
+}

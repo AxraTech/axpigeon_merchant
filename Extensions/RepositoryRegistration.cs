@@ -12,6 +12,7 @@ namespace AxpigeonApp.Extensions
             services.AddScoped<ITransactionsRepository, TransactionsRepository>();
             services.AddScoped<IKeyRepository, KeyRepository>();
             services.AddScoped<IHomeRepository, HomeRepository>();
+            services.AddScoped<IScheduledSmsRepository, ScheduledSmsRepository>();
 
             return services;
         }

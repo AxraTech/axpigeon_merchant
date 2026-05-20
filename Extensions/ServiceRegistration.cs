@@ -13,6 +13,7 @@ namespace AxpigeonApp.Extensions
             services.AddScoped<ITransactionsService, TransactionsService>();
             services.AddScoped<IKeyService, KeyService>();
             services.AddScoped<IHomeService, HomeService>();
+            services.AddScoped<IScheduledSmsService, ScheduledSmsService>();
 
             return services;
         }

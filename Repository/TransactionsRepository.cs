@@ -99,7 +99,7 @@ namespace AxpigeonApp.Repository
 
                     pov_campaign_id = reader.IsDBNull(4) ? "" : reader.GetString(4),
                     pov_transaction_id = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                    schedule_date = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                    schedule_date = reader.IsDBNull(6) ? "" : reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss"),
 
                     sent_at = reader.IsDBNull(7) ? DateTime.MinValue : reader.GetDateTime(7),
                     sms_type = reader.IsDBNull(8) ? "" : reader.GetString(8),
