@@ -1,8 +1,8 @@
 ﻿using AxpigeonApp.Dao;
 using AxpigeonApp.Dto;
+using AxpigeonApp.Utils;
 using Npgsql;
-using System.Security.Cryptography;
-using System.Text;
+
 namespace AxpigeonApp.Repository
 {
     public class TransactionsRepository : ITransactionsRepository
@@ -26,7 +26,6 @@ namespace AxpigeonApp.Repository
             using var con = new NpgsqlConnection(_conn);
             await con.OpenAsync();
 
-            // 1️⃣ Get merchant_id of logged in user
             using (var merchantIdCmd = new NpgsqlCommand(
                 @"SELECT merchant_id 
           FROM tbl_users 
@@ -39,7 +38,7 @@ namespace AxpigeonApp.Repository
                 if (obj != null && obj != DBNull.Value)
                     merchantId = (Guid)obj;
                 else
-                    return result; // user not linked to merchant
+                    return result;
             }
 
             // Count Query
@@ -68,8 +67,11 @@ namespace AxpigeonApp.Repository
                 m.name AS merchant_name,
                 p.name AS provider_name,
                 t.phone,
-                cdl.secret_key,
-                msgd.password AS msgPassword
+                cdl.key_version,
+                msgd.merchant_wrapped_dek,
+                msgd.dek_salt,
+                msgd.dek_iv,
+                CASE WHEN msgd.merchant_wrapped_dek IS NOT NULL THEN true ELSE false END AS has_passphrase
             FROM tbl_transactions t
             LEFT JOIN tbl_branches b ON t.branch_id = b.id
             LEFT JOIN tbl_users u ON b.id = u.branch_id
@@ -92,15 +94,12 @@ namespace AxpigeonApp.Repository
                 items.Add(new TransactionListDao
                 {
                     id = reader.GetGuid(0),
-
                     is_send_now = reader.IsDBNull(1) ? true : reader.GetBoolean(1),
-                    message = reader.IsDBNull(2) ? "" : DecryptMessage(reader.GetString(17),reader.GetString(2)),
+                    message = "***encrypted***",
                     operator_name = reader.IsDBNull(3) ? "" : reader.GetString(3),
-
                     pov_campaign_id = reader.IsDBNull(4) ? "" : reader.GetString(4),
                     pov_transaction_id = reader.IsDBNull(5) ? "" : reader.GetString(5),
                     schedule_date = reader.IsDBNull(6) ? "" : reader.GetDateTime(6).ToString("yyyy-MM-dd HH:mm:ss"),
-
                     sent_at = reader.IsDBNull(7) ? DateTime.MinValue : reader.GetDateTime(7),
                     sms_type = reader.IsDBNull(8) ? "" : reader.GetString(8),
                     transaction_id = reader.IsDBNull(9) ? "" : reader.GetString(9),
@@ -111,7 +110,13 @@ namespace AxpigeonApp.Repository
                     merchant_name = reader.IsDBNull(14) ? "" : reader.GetString(14),
                     provider_name = reader.IsDBNull(15) ? "" : reader.GetString(15),
                     phone = reader.IsDBNull(16) ? "" : reader.GetString(16),
-                    msgPassword = reader.IsDBNull(18) ? "" : DecryptMessage(reader.GetString(17),reader.GetString(18))
+                    encryptedMessage = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                    keyVersion = reader.IsDBNull(17) ? 1 : reader.GetInt32(17),
+                    wrappedDek = reader.IsDBNull(18) ? "" : reader.GetString(18),
+                    dekSalt = reader.IsDBNull(19) ? "" : reader.GetString(19),
+                    dekIv = reader.IsDBNull(20) ? "" : reader.GetString(20),
+                    hasPassphrase = reader.IsDBNull(21) ? false : reader.GetBoolean(21),
+                    msgPassword = "",
                 });
             }
 
@@ -122,54 +127,6 @@ namespace AxpigeonApp.Repository
             return result;
         }
 
-        // Format key like your KeyFormatService in Java
-        private static byte[] FormatKey(string secretKey)
-        {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedKey = new byte[32]; // AES-256
-            int len = Math.Min(keyBytes.Length, 32);
-            Array.Copy(keyBytes, formattedKey, len);
-            return formattedKey;
-        }
-
-        // Format IV like your KeyFormatService in Java
-        private static byte[] FormatIV(string secretKey)
-        {
-            byte[] ivBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedIV = new byte[16]; // AES block size
-            int len = Math.Min(ivBytes.Length, 16);
-            Array.Copy(ivBytes, formattedIV, len);
-            return formattedIV;
-        }
-        public static string DecryptMessage(string secretKey, string base64Message)
-        {
-            try
-            {
-                byte[] key = FormatKey(secretKey);
-                byte[] iv = FormatIV(secretKey);
-
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = key;
-                    aes.IV = iv;
-                    aes.Mode = CipherMode.CBC;
-                    aes.Padding = PaddingMode.PKCS7; // PKCS5 in Java = PKCS7 in .NET
-
-                    byte[] encryptedBytes = Convert.FromBase64String(base64Message);
-
-                    using (ICryptoTransform decryptor = aes.CreateDecryptor())
-                    {
-                        byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-                        return Encoding.UTF8.GetString(decryptedBytes);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Invalid secret key or message", ex);
-            }
-        }
-
         public async Task<List<BrandNames>> GetAllBrandNames(Guid userId)
         {
             var brandNames = new List<BrandNames>();
@@ -177,7 +134,6 @@ namespace AxpigeonApp.Repository
             using var con = new NpgsqlConnection(_conn);
             await con.OpenAsync();
 
-            // 1️⃣ Get merchant_id of logged in user
             using (var merchantIdCmd = new NpgsqlCommand(
                 @"SELECT merchant_id 
               FROM tbl_users 
@@ -190,7 +146,7 @@ namespace AxpigeonApp.Repository
                     if (obj != null && obj != DBNull.Value)
                         merchantId = (Guid)obj;
                     else
-                        return brandNames; // user not linked to merchant
+                        return brandNames;
                 }
             using var cmd = new NpgsqlCommand(@"
             SELECT
@@ -227,7 +183,8 @@ namespace AxpigeonApp.Repository
             await con.OpenAsync();
 
             await using var cmd = new NpgsqlCommand(
-                "SELECT gw.username, gw.pass_text AS password, b.brand_name, cdl.sender_id, cdl.secret_key " +
+                "SELECT gw.username, gw.pass_text AS password, b.brand_name, cdl.sender_id, " +
+                "cdl.secret_key, cdl.encrypted_secret_key, cdl.key_version " +
                 "FROM tbl_users u " +
                 "LEFT JOIN tbl_branches b ON u.branch_id = b.id " +
                 "LEFT JOIN tbl_credentials cdl ON b.credential_id = cdl.id " +
@@ -242,13 +199,25 @@ namespace AxpigeonApp.Repository
 
             if (await reader.ReadAsync())
             {
+                int keyVersion = reader.IsDBNull(6) ? 1 : reader.GetInt32(6);
+                string secretKey;
+
+                if (keyVersion >= 2 && !reader.IsDBNull(5))
+                {
+                    secretKey = ServerKeyUtil.UnwrapDek(reader.GetString(5));
+                }
+                else
+                {
+                    secretKey = reader.IsDBNull(4) ? null : reader.GetString(4);
+                }
+
                 merchant = new ValidateMerchantDao
                 {
                     username = reader.IsDBNull(0) ? null : reader.GetString(0),
                     password = reader.IsDBNull(1) ? null : reader.GetString(1),
                     brand_name = reader.IsDBNull(2) ? null : reader.GetString(2),
                     sender_id = reader.IsDBNull(3) ? null : reader.GetString(3),
-                    secret_key = reader.IsDBNull(4) ? null : reader.GetString(4)
+                    secret_key = secretKey
                 };
             }
 

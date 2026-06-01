@@ -1,7 +1,5 @@
 ﻿using AxpigeonApp.Dao;
 using Npgsql;
-using System.Security.Cryptography;
-using System.Text;
 
 namespace AxpigeonApp.Repository
 {
@@ -101,11 +99,11 @@ namespace AxpigeonApp.Repository
                             purchase_mec = reader.IsDBNull(9) ? "" : reader.GetString(9),
                         });
                     }
-                } // ⭐ reader CLOSED here
+                }
             }
 
             // =====================================================
-            // 4️⃣ TRANSACTION LIST (SECURE + PAGINATION)
+            // 4️⃣ TRANSACTION LIST (no server-side decrypt)
             // =====================================================
             using (var cmd = new NpgsqlCommand(@"
         SELECT 
@@ -126,8 +124,11 @@ namespace AxpigeonApp.Repository
             m.name AS merchant_name,
             p.name AS provider_name,
             t.phone,
-            cdl.secret_key,
-            msgd.password
+            cdl.key_version,
+            msgd.merchant_wrapped_dek,
+            msgd.dek_salt,
+            msgd.dek_iv,
+            CASE WHEN msgd.merchant_wrapped_dek IS NOT NULL THEN true ELSE false END AS has_passphrase
         FROM tbl_transactions t
         LEFT JOIN tbl_branches b ON t.branch_id = b.id
         LEFT JOIN tbl_merchants m ON t.merchant_id = m.id
@@ -149,15 +150,11 @@ namespace AxpigeonApp.Repository
 
                 while (await reader.ReadAsync())
                 {
-                    var secretKey = reader.IsDBNull(17) ? "" : reader.GetString(17);
-                    var encryptedMsg = reader.IsDBNull(2) ? "" : reader.GetString(2);
-                    var encryptedPwd = reader.IsDBNull(18) ? "" : reader.GetString(18);
-
                     result.transactions.Items.Add(new TransactionListDao
                     {
                         id = reader.GetGuid(0),
                         is_send_now = reader.IsDBNull(1) || reader.GetBoolean(1),
-                        message = encryptedMsg == "" ? "" : DecryptMessage(secretKey, encryptedMsg),
+                        message = "***encrypted***",
                         operator_name = reader.IsDBNull(3) ? "" : reader.GetString(3),
                         pov_campaign_id = reader.IsDBNull(4) ? "" : reader.GetString(4),
                         pov_transaction_id = reader.IsDBNull(5) ? "" : reader.GetString(5),
@@ -172,7 +169,13 @@ namespace AxpigeonApp.Repository
                         merchant_name = reader.IsDBNull(14) ? "" : reader.GetString(14),
                         provider_name = reader.IsDBNull(15) ? "" : reader.GetString(15),
                         phone = reader.IsDBNull(16) ? "" : reader.GetString(16),
-                        msgPassword = encryptedPwd == "" ? "" : DecryptMessage(secretKey, encryptedPwd),
+                        encryptedMessage = reader.IsDBNull(2) ? "" : reader.GetString(2),
+                        keyVersion = reader.IsDBNull(17) ? 1 : reader.GetInt32(17),
+                        wrappedDek = reader.IsDBNull(18) ? "" : reader.GetString(18),
+                        dekSalt = reader.IsDBNull(19) ? "" : reader.GetString(19),
+                        dekIv = reader.IsDBNull(20) ? "" : reader.GetString(20),
+                        hasPassphrase = reader.IsDBNull(21) ? false : reader.GetBoolean(21),
+                        msgPassword = "",
                     });
                 }
             }
@@ -182,54 +185,5 @@ namespace AxpigeonApp.Repository
 
             return result;
         }
-
-        // Format key like your KeyFormatService in Java
-        private static byte[] FormatKey(string secretKey)
-        {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedKey = new byte[32]; // AES-256
-            int len = Math.Min(keyBytes.Length, 32);
-            Array.Copy(keyBytes, formattedKey, len);
-            return formattedKey;
-        }
-
-        // Format IV like your KeyFormatService in Java
-        private static byte[] FormatIV(string secretKey)
-        {
-            byte[] ivBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedIV = new byte[16]; // AES block size
-            int len = Math.Min(ivBytes.Length, 16);
-            Array.Copy(ivBytes, formattedIV, len);
-            return formattedIV;
-        }
-        public static string DecryptMessage(string secretKey, string base64Message)
-        {
-            try
-            {
-                byte[] key = FormatKey(secretKey);
-                byte[] iv = FormatIV(secretKey);
-
-                using (Aes aes = Aes.Create())
-                {
-                    aes.Key = key;
-                    aes.IV = iv;
-                    aes.Mode = CipherMode.CBC;
-                    aes.Padding = PaddingMode.PKCS7; // PKCS5 in Java = PKCS7 in .NET
-
-                    byte[] encryptedBytes = Convert.FromBase64String(base64Message);
-
-                    using (ICryptoTransform decryptor = aes.CreateDecryptor())
-                    {
-                        byte[] decryptedBytes = decryptor.TransformFinalBlock(encryptedBytes, 0, encryptedBytes.Length);
-                        return Encoding.UTF8.GetString(decryptedBytes);
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                throw new InvalidOperationException("Invalid secret key or message", ex);
-            }
-        }
-
     }
 }

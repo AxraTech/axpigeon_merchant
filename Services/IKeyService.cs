@@ -11,5 +11,8 @@ namespace AxpigeonApp.Services
         Task<List<BrandNames>> GetAllBrandNames();
 
         Task AddPass(AddPasswordDto dto);
+
+        Task<List<BrandNames>> GetBranchesForPassphrase(Guid userId);
+        Task SetupPassphrase(Guid userId, SetupPassphraseDto dto);
     }
 }

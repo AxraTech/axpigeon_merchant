@@ -49,10 +49,11 @@ namespace AxpigeonApp.Services
                 brandName = x.brandName,
                 password = x.password,
                 passwordExp = x.passwordExp,
-                updatedAt = x.updatedAt
+                updatedAt = x.updatedAt,
+                hasPassphrase = x.hasPassphrase,
+                status = x.status
             }).ToList();
 
-            // Return as PaginatedList<PasswordListDao>
             return new PaginatedList<PasswordListDao>
             {
                 Items = mappedItems,
@@ -78,56 +79,17 @@ namespace AxpigeonApp.Services
 
         public async Task AddPass(AddPasswordDto dto)
         {
-            string secretKey = await _repo.FindSecretKeyByBranchId(dto.branch_id);
-            dto.password = EncryptMessage(dto.password, secretKey);
             await _repo.CreatePassword(dto);
         }
-        public static string EncryptMessage(string content, string secretKey)
+
+        public async Task<List<BrandNames>> GetBranchesForPassphrase(Guid userId)
         {
-            byte[] keyBytes = FormatKey(secretKey);
-            byte[] ivBytes = FormatIV(secretKey);
-
-            using var aes = Aes.Create();
-            aes.KeySize = 256;
-            aes.BlockSize = 128;
-            aes.Mode = CipherMode.CBC;
-            aes.Padding = PaddingMode.PKCS7; // PKCS5Padding == PKCS7 in .NET
-            aes.Key = keyBytes;
-            aes.IV = ivBytes;
-
-            using var encryptor = aes.CreateEncryptor();
-            byte[] plainBytes = Encoding.UTF8.GetBytes(content);
-            byte[] encryptedBytes = encryptor.TransformFinalBlock(plainBytes, 0, plainBytes.Length);
-
-          
-            return Convert.ToBase64String(encryptedBytes);
-        }
-                
-        
-        private static byte[] FormatIV(string secretKey)
-        {
-            byte[] ivBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedIV = new byte[16]; // AES block size (16 bytes)
-
-            int len = Math.Min(ivBytes.Length, 16);
-            Array.Copy(ivBytes, formattedIV, len);
-
-            return formattedIV;
+            return await _repo.GetBranchesForPassphrase(userId);
         }
 
-
-        private static byte[] FormatKey(string secretKey)
+        public async Task SetupPassphrase(Guid userId, SetupPassphraseDto dto)
         {
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] formattedKey = new byte[32]; // AES-256 (32 bytes)
-
-            int len = Math.Min(keyBytes.Length, 32);
-            Array.Copy(keyBytes, formattedKey, len);
-
-            return formattedKey;
+            await _repo.SetupPassphrase(userId, dto);
         }
-
-
-
     }
 }

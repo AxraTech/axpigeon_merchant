@@ -279,17 +279,26 @@
                                 <div class="d-flex justify-content-center align-items-center">
                                     <span id="messageContent-@index">********</span>
 
-
-
-
-                                    <button type="button"
-                                            class="btn btn-sm btn-view ms-2"
-                                            data-bs-toggle="modal"
-                                            data-bs-target="#checkModal"
-                                            data-password="@u.msgPassword"
-                                            data-message="@u.message" data-id="messageContent-@index">
-                                        <i data-lucide="eye-off"></i>
-                                    </button>
+                                    @if (u.hasPassphrase)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-sm btn-view ms-2"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#checkModal"
+                                                data-encrypted="@u.encryptedMessage"
+                                                data-wrapped-dek="@u.wrappedDek"
+                                                data-dek-salt="@u.dekSalt"
+                                                data-dek-iv="@u.dekIv"
+                                                data-id="messageContent-@index">
+                                            <i data-lucide="eye-off"></i>
+                                        </button>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary ms-2" title="No passphrase configured">
+                                            <i data-lucide="lock"></i>
+                                        </span>
+                                    }
                                 </div>
                             </td>
                             <td>
@@ -330,20 +339,34 @@
         <div class="modal-content">
 
             <div class="modal-header">
-                <h5 class="modal-title">Verify Password</h5>
+                <h5 class="modal-title">Enter Passphrase to Decrypt</h5>
                 <button class="btn-close" data-bs-dismiss="modal"></button>
             </div>
 
             <div class="modal-body">
+                <div class="form-check mb-3">
+                    <input class="form-check-input" type="checkbox" id="decryptAllCheck">
+                    <label class="form-check-label" for="decryptAllCheck">
+                        Decrypt all visible messages
+                    </label>
+                </div>
+
                 <input id="passwordInput"
                        type="password"
                        class="form-control"
-                       placeholder="Enter password">
+                       placeholder="Enter passphrase">
 
                 <small id="errorText"
                        class="text-danger d-none">
-                    Wrong password
+                    Invalid passphrase or decryption failed
                 </small>
+
+                <div id="decryptSpinner" class="text-center mt-2 d-none">
+                    <div class="spinner-border spinner-border-sm" role="status">
+                        <span class="visually-hidden">Decrypting...</span>
+                    </div>
+                    <small class="ms-1">Deriving key...</small>
+                </div>
             </div>
 
             <div class="modal-footer">
@@ -351,7 +374,7 @@
                     Close
                 </button>
                 <button class="btn btn-primary" id="btnCheck">
-                    Check
+                    Decrypt
                 </button>
             </div>
 
@@ -359,48 +382,83 @@
     </div>
 </div>
 
-<!-- ================= SCRIPT ================= -->
+<script src="~/js/axpigeon-crypto.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
 
-        let currentPassword = "";
-        let currentMessage = "";
-        let targetSpanId = "";
+        let currentBtn = null;
 
         document.querySelectorAll(".btn-view").forEach(btn => {
             btn.addEventListener("click", function () {
-
-                currentPassword = this.dataset.password;
-                currentMessage = this.dataset.message;
-                targetSpanId = this.dataset.id;
-
+                currentBtn = this;
                 document.getElementById("passwordInput").value = "";
                 document.getElementById("errorText").classList.add("d-none");
+                document.getElementById("decryptSpinner").classList.add("d-none");
             });
         });
 
-        document.getElementById("btnCheck").addEventListener("click", function () {
+        document.getElementById("btnCheck").addEventListener("click", async function () {
+            const passphrase = document.getElementById("passwordInput").value;
+            if (!passphrase) return;
 
-            const input = document.getElementById("passwordInput").value;
+            const spinner = document.getElementById("decryptSpinner");
+            const errorText = document.getElementById("errorText");
+            const btnCheck = this;
 
-            if (input === currentPassword) {
+            spinner.classList.remove("d-none");
+            errorText.classList.add("d-none");
+            btnCheck.disabled = true;
 
-                document.getElementById(targetSpanId).innerText =
-                    currentMessage;
+            const decryptAll = document.getElementById("decryptAllCheck").checked;
 
-                bootstrap.Modal.getInstance(
-                    document.getElementById("checkModal")
-                ).hide();
+            try {
+                if (decryptAll) {
+                    const buttons = document.querySelectorAll(".btn-view");
+                    for (const btn of buttons) {
+                        const enc = btn.dataset.encrypted;
+                        const wdek = btn.dataset.wrappedDek;
+                        const salt = btn.dataset.dekSalt;
+                        const iv = btn.dataset.dekIv;
+                        const spanId = btn.dataset.id;
 
-            } else {
-                document.getElementById("errorText")
-                    .classList.remove("d-none");
+                        if (!enc || !wdek || !salt || !iv) continue;
+
+                        try {
+                            const plaintext = await AxpigeonCrypto.decryptWithCache(
+                                passphrase, wdek, salt, iv, enc
+                            );
+                            document.getElementById(spanId).innerText = plaintext;
+                        } catch (e) {
+                            // skip rows that fail (different branch/passphrase)
+                        }
+                    }
+
+                    bootstrap.Modal.getInstance(
+                        document.getElementById("checkModal")
+                    ).hide();
+                } else {
+                    const enc = currentBtn.dataset.encrypted;
+                    const wdek = currentBtn.dataset.wrappedDek;
+                    const salt = currentBtn.dataset.dekSalt;
+                    const iv = currentBtn.dataset.dekIv;
+                    const spanId = currentBtn.dataset.id;
+
+                    const plaintext = await AxpigeonCrypto.decryptWithCache(
+                        passphrase, wdek, salt, iv, enc
+                    );
+
+                    document.getElementById(spanId).innerText = plaintext;
+
+                    bootstrap.Modal.getInstance(
+                        document.getElementById("checkModal")
+                    ).hide();
+                }
+            } catch (e) {
+                errorText.classList.remove("d-none");
+            } finally {
+                spinner.classList.add("d-none");
+                btnCheck.disabled = false;
             }
         });
-
     });
 </script>
-
-
-
-

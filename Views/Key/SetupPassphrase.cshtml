@@ -1,0 +1,117 @@
+@using AxpigeonApp.Dao
+@model List<BrandNames>
+
+@{
+    ViewData["Title"] = "Setup Passphrase";
+}
+
+<nav aria-label="breadcrumb">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+        <li class="breadcrumb-item active">Setup Passphrase</li>
+    </ol>
+</nav>
+
+<div class="d-flex justify-content-center">
+    <div class="col-xxl-6 col-md-8 col-sm-10">
+        <div class="card mt-2">
+            <div class="card-header">
+                <h5 class="card-title text-center">Setup Viewing Passphrase</h5>
+            </div>
+
+            <div class="card-body">
+                @if (TempData["AlertMessage"] != null)
+                {
+                    var alertType = TempData["AlertType"] as string ?? "info";
+                    <div class="alert alert-@alertType" role="alert">
+                        @TempData["AlertMessage"]
+                    </div>
+                }
+
+                <div class="alert alert-info" role="alert">
+                    <strong>Important:</strong> This passphrase will be required to view
+                    your sent message content. Store it securely — it cannot be recovered if lost.
+                </div>
+
+                @if (Model.Count == 0)
+                {
+                    <div class="alert alert-warning text-center" role="alert">
+                        All your branches already have passphrases configured, or no branches have credentials yet.
+                    </div>
+                }
+                else
+                {
+                    <form method="POST">
+                        @Html.AntiForgeryToken()
+
+                        <div class="form-floating mb-3">
+                            <select class="form-select" name="branch_id" id="brandSelect" required>
+                                <option value="">Select a branch</option>
+                                @foreach (var brand in Model)
+                                {
+                                    <option value="@brand.id">@brand.brand_name</option>
+                                }
+                            </select>
+                            <label>Branch</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password"
+                                   class="form-control"
+                                   name="passphrase"
+                                   id="passphraseInput"
+                                   placeholder="Passphrase"
+                                   minlength="8"
+                                   required>
+                            <label>Passphrase (min 8 characters)</label>
+                        </div>
+
+                        <div class="form-floating mb-3">
+                            <input type="password"
+                                   class="form-control"
+                                   id="confirmPassphrase"
+                                   placeholder="Confirm Passphrase"
+                                   minlength="8"
+                                   required>
+                            <label>Confirm Passphrase</label>
+                        </div>
+
+                        <small id="matchError" class="text-danger d-none mb-2 d-block">
+                            Passphrases do not match
+                        </small>
+
+                        <button type="submit" class="btn btn-primary w-100" id="submitBtn">
+                            Setup Passphrase
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const form = document.querySelector("form");
+        if (!form) return;
+
+        const passphrase = document.getElementById("passphraseInput");
+        const confirm = document.getElementById("confirmPassphrase");
+        const matchError = document.getElementById("matchError");
+
+        form.addEventListener("submit", function (e) {
+            if (passphrase.value !== confirm.value) {
+                e.preventDefault();
+                matchError.classList.remove("d-none");
+                return;
+            }
+            matchError.classList.add("d-none");
+        });
+
+        confirm.addEventListener("input", function () {
+            if (passphrase.value === confirm.value) {
+                matchError.classList.add("d-none");
+            }
+        });
+    });
+</script>

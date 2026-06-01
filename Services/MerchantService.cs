@@ -47,7 +47,6 @@ namespace AxpigeonApp.Services
             {
                 throw new KeyNotFoundException("User not found.");
             }
-            Console.WriteLine($"User's current hashed password: {user.password}");
             if (!BCrypt.Net.BCrypt.Verify(old_password, user.password))
             {
                 throw new UnauthorizedAccessException("Old password is incorrect.");

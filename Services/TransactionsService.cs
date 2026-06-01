@@ -49,6 +49,12 @@ namespace AxpigeonApp.Services
                 created_at = x.created_at,
                 phone = x.phone,
                 msgPassword = x.msgPassword,
+                encryptedMessage = x.encryptedMessage,
+                wrappedDek = x.wrappedDek,
+                dekSalt = x.dekSalt,
+                dekIv = x.dekIv,
+                keyVersion = x.keyVersion,
+                hasPassphrase = x.hasPassphrase,
             }).ToList();
             // Return as PaginatedList<TransactionListDao>
             return new PaginatedList<TransactionListDao>

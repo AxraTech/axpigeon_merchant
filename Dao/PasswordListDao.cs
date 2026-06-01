@@ -7,5 +7,7 @@
         public string password { get; set; }
         public DateTime passwordExp { get; set; }
         public DateTime updatedAt { get; set; }
+        public bool hasPassphrase { get; set; } = false;
+        public string status { get; set; } = "";
     }
 }

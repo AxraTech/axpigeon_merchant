@@ -13,6 +13,7 @@ namespace AxpigeonApp.Extensions
             services.AddScoped<IKeyRepository, KeyRepository>();
             services.AddScoped<IHomeRepository, HomeRepository>();
             services.AddScoped<IScheduledSmsRepository, ScheduledSmsRepository>();
+            services.AddScoped<IAuditRepository, AuditRepository>();
 
             return services;
         }

@@ -38,5 +38,13 @@
 
 
         public DateTime created_at { get; set; }
+
+        // Envelope encryption fields for client-side decryption
+        public string encryptedMessage { get; set; } = "";
+        public string wrappedDek { get; set; } = "";
+        public string dekSalt { get; set; } = "";
+        public string dekIv { get; set; } = "";
+        public int keyVersion { get; set; } = 1;
+        public bool hasPassphrase { get; set; } = false;
     }
 }

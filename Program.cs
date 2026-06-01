@@ -1,5 +1,6 @@
 using AxpigeonApp.Configuration;
 using AxpigeonApp.Extensions;
+using AxpigeonApp.Utils;
 using OfficeOpenXml;
 
 EnvConfiguration.LoadDotEnv();
@@ -64,6 +65,12 @@ builder.Services.AddAuthentication("AxPCookieAuth")
         options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
         options.ClaimsIssuer = "AxPIssuer";
     });
+
+var masterKeyHex = Environment.GetEnvironmentVariable("SERVER_MASTER_KEY") ?? "";
+if (!string.IsNullOrEmpty(masterKeyHex))
+{
+    ServerKeyUtil.Initialize(masterKeyHex);
+}
 
 var app = builder.Build();
 

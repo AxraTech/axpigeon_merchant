@@ -13,5 +13,8 @@ namespace AxpigeonApp.Repository
 
         Task<string> FindSecretKeyByBranchId(Guid branchId);
         Task CreatePassword(AddPasswordDto dto);
+
+        Task<List<BrandNames>> GetBranchesForPassphrase(Guid userId);
+        Task SetupPassphrase(Guid userId, SetupPassphraseDto dto);
     }
 }
