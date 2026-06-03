@@ -401,10 +401,124 @@ Best end-to-end example in the codebase:
 8. **API status codes:** Auth uses `"000"`; SMS operations expect `"00"` — check both when integrating new endpoints.
 9. **Encryption:** `secret_key` formatting (32-byte key, 16-byte IV from UTF-8 bytes) must match the main Axpigeon/Java backend.
 10. **Empty `ExternalApi/` folder:** Consider moving HTTP client code there when adding second or third API integrations.
+11. **Catch errors in services** (repository and HTTP) and return safe fallback models — see [Error handling](#11-error-handling-in-services-and-views).
 
 ---
 
-## 11. Environment variables (integration)
+## 11. Error handling in services and views
+
+**All services** — whether they call the backend REST API, third-party providers, or **repositories** that read/write PostgreSQL via raw SQL (`Npgsql`) — **must not let exceptions propagate to the controller unhandled**. An unhandled exception causes the developer exception page (stack trace) or a generic 500 in production — both are unacceptable for merchant-facing users.
+
+Apply the same graceful-degradation pattern for:
+
+| Service dependency | Typical failures |
+|--------------------|------------------|
+| **HttpClient** → Axpigeon API | Network errors, auth failure, non-2xx responses |
+| **I*Repository** → database | Connection timeouts, constraint violations, unexpected null rows |
+| **Mixed** (repo + API) | Either layer can fail; handle at the service boundary |
+
+### Required pattern
+
+**Service layer — wrap the entire public method in try/catch:**
+
+```csharp
+public async Task<SomeResponseDao> GetDataAsync()
+{
+    try
+    {
+        // Repository (Npgsql), HttpClient, mapping, business rules — all inside try
+        var rows = await _repo.GetSomethingAsync(...);
+        return MapToResponse(rows);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Service error: {ex.Message}");
+        return BuildFallbackResponse(ex.Message);
+    }
+}
+```
+
+The fallback response should be a valid DAO (or view model) with a non-success `status` when applicable, a user-friendly `message`, and sensible defaults (zeros, empty lists, empty `PaginatedList`) so the view can render without null-reference errors.
+
+**View layer — check status (or equivalent) and show a warning banner, not a crash:**
+
+```html
+@if (Model.status != "00")
+{
+    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+        <strong>Note:</strong> @Model.message
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+```
+
+For list pages without a `status` field, pass a flag or message via the model (e.g. `ViewBag.ErrorMessage` or a wrapper DAO) and still render the table shell with empty `Items`.
+
+The rest of the page renders normally with the fallback data (zero balances, "unavailable" badges, empty tables).
+
+### Why this matters
+
+- The backend API may be unreachable (network, deployment timing, operator IP restrictions on localhost).
+- External provider APIs may time out or return unexpected responses.
+- PostgreSQL may be down, misconfigured, or return errors from invalid data or missing rows.
+- Merchant users should see a clear "temporarily unavailable" notice and still use the portal — not a raw stack trace.
+
+### Example
+
+**Repository-backed list (database only):**
+
+```csharp
+public async Task<PaginatedList<TransactionListDao>> GetTransactionsAsync(Guid merchantId, int page, int pageSize)
+{
+    try
+    {
+        return await _repo.GetTransactionsByMerchantAsync(merchantId, page, pageSize);
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Transactions service error: {ex.Message}");
+        return new PaginatedList<TransactionListDao>
+        {
+            Items = new List<TransactionListDao>(),
+            TotalCount = 0,
+            Page = page,
+            PageSize = pageSize,
+            // Expose message via wrapper model or ViewBag in controller if needed
+        };
+    }
+}
+```
+
+**API-backed feature (hypothetical usage page):**
+
+```csharp
+public async Task<UsageResponseDao> GetUsageAsync(Guid merchantId)
+{
+    try
+    {
+        string token = await GetTokenAsync();
+        // ... call backend API ...
+        return successResult;
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Usage service error: {ex.Message}");
+        return new UsageResponseDao
+        {
+            status = "01",
+            message = "Usage data is temporarily unavailable",
+            totalSent = 0,
+            totalFailed = 0
+        };
+    }
+}
+```
+
+The view checks `Model.status` (or a shared error message) and shows a warning banner while still rendering the page layout with safe defaults. Use this pattern for **every** new service method, not only HTTP calls.
+
+---
+
+## 12. Environment variables (integration)
 
 | Variable | Maps to | Used for |
 |----------|---------|----------|
@@ -415,7 +529,7 @@ Best end-to-end example in the codebase:
 
 ---
 
-## 12. Current module map (quick reference)
+## 13. Current module map (quick reference)
 
 ```
 Controllers/     → HTTP + authorization + views
@@ -436,7 +550,7 @@ Exceptions/      → Status code constants
 
 ---
 
-## 13. Related documents
+## 14. Related documents
 
 When adding features, keep this guide updated if you:
 
