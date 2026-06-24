@@ -15,5 +15,9 @@
         public string status { get; set; }
 
         public string merchant_name { get; set; }
+
+        public string merchant_status { get; set; }
+
+        public string merchant_status_reason { get; set; }
     }
 }

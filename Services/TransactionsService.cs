@@ -232,7 +232,7 @@ namespace AxpigeonApp.Services
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine("❌ SMS send failed");
-                throw new Exception($"Send SMS failed: {rawResponse}");
+                throw new Exception(ApiErrorUtil.ExtractMessage(rawResponse, "Send SMS failed"));
             }
 
             var apiResponse =
@@ -319,7 +319,7 @@ namespace AxpigeonApp.Services
             if (!response.IsSuccessStatusCode)
             {
                 Console.WriteLine("❌ SMS send failed");
-                throw new Exception($"Send SMS failed: {rawResponse}");
+                throw new Exception(ApiErrorUtil.ExtractMessage(rawResponse, "Send SMS failed"));
             }
 
             var apiResponse =
@@ -359,13 +359,15 @@ namespace AxpigeonApp.Services
                 requestBody
             );
 
+            var rawBody = await response.Content.ReadAsStringAsync();
+
             if (!response.IsSuccessStatusCode)
             {
-                throw new Exception("Auth API failed");
+                throw new Exception(ApiErrorUtil.ExtractMessage(rawBody, "Authentication failed"));
             }
 
             var authResponse =
-                await response.Content.ReadFromJsonAsync<AuthTokenResponseDao>();
+                System.Text.Json.JsonSerializer.Deserialize<AuthTokenResponseDao>(rawBody);
 
             if (authResponse == null)
                 throw new Exception("Auth response is null");
@@ -376,7 +378,7 @@ namespace AxpigeonApp.Services
             if (string.IsNullOrWhiteSpace(authResponse.data))
                 throw new Exception("Token is empty");
 
-            return authResponse.data; // ✅ JWT token
+            return authResponse.data;
         }
 
 

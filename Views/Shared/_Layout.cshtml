@@ -711,6 +711,18 @@
         <!-- ============================================================== -->
         <div class="content-page">
             <div class="container-fluid">
+                @if (User.Identity.IsAuthenticated)
+                {
+                    var merchantStatus = User.FindFirst("MerchantStatus")?.Value;
+                    @if (merchantStatus == "ACTIVE_READONLY")
+                    {
+                        <div class="alert alert-info alert-dismissible mx-3 mt-3 mb-0" role="alert">
+                            <i class="ti ti-info-circle me-1"></i>
+                            <strong>Read-Only Mode:</strong> Your account is in read-only mode. You can view data but cannot send SMS messages. Contact your administrator for assistance.
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+                }
                 @RenderBody()
             </div>
         </div>

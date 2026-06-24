@@ -21,7 +21,7 @@ namespace AxpigeonApp.Repository
             using var con = new NpgsqlConnection(_conn);
             await con.OpenAsync();
             using var cmd = new NpgsqlCommand(
-             "SELECT u.id, u.email, u.role, u.password, u.password_exp, u.status, m.name " +
+             "SELECT u.id, u.email, u.role, u.password, u.password_exp, u.status, m.name, m.status AS merchant_status, m.status_reason AS merchant_status_reason " +
              "FROM tbl_users u " +
              "LEFT JOIN tbl_merchants m ON u.merchant_id = m.id " +
              "WHERE u.email = @email",
@@ -40,7 +40,9 @@ namespace AxpigeonApp.Repository
                     password = reader.GetString(3),
                     password_exp = reader.GetString(4),
                     status = reader.GetString(5),
-                    merchant_name = reader.IsDBNull(6) ? null : reader.GetString(6)
+                    merchant_name = reader.IsDBNull(6) ? null : reader.GetString(6),
+                    merchant_status = reader.IsDBNull(7) ? null : reader.GetString(7),
+                    merchant_status_reason = reader.IsDBNull(8) ? null : reader.GetString(8)
                 };
             }
             return user;

@@ -32,7 +32,9 @@ namespace AxpigeonApp.Service
                 email = user.email,
                 role = user.role,
                 status = user.status,
-                merchant_name = user.merchant_name
+                merchant_name = user.merchant_name,
+                merchant_status = user.merchant_status,
+                merchant_status_reason = user.merchant_status_reason
             };
         }
     }

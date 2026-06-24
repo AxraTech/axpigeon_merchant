@@ -3,7 +3,7 @@
     public enum UserStatus
     {
         ACTIVE,
-        UNACTIVE,
-        SUSPEND
+        SUSPENDED,
+        DISABLED
     }
 }

@@ -127,9 +127,9 @@ namespace AxpigeonApp.Controllers
 
                 return RedirectToAction(nameof(SendMessage));
             }
-            catch (Exception)
+            catch (Exception ex)
             {
-                ModelState.AddModelError(string.Empty, "Failed to send message. Please try again.");
+                ModelState.AddModelError(string.Empty, ex.Message);
                 var brandNames = await _service.GetAllBrandNames(userId);
                 return View(brandNames);
             }

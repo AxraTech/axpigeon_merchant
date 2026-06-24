@@ -373,7 +373,7 @@ namespace AxpigeonApp.Repository
                 userCmd.Parameters.AddWithValue("@password_exp", DateTime.UtcNow.AddMonths(3));
                 userCmd.Parameters.AddWithValue("@role", "MERCHANT");
                 userCmd.Parameters.AddWithValue("@merchant_id", merchantId);
-                userCmd.Parameters.AddWithValue("@status", "SUCCESS");
+                userCmd.Parameters.AddWithValue("@status", "ACTIVE");
 
                 var userObj = await userCmd.ExecuteScalarAsync();
                 if (userObj is not Guid userId)
@@ -474,7 +474,7 @@ namespace AxpigeonApp.Repository
                 userCmd.Parameters.AddWithValue("@role", "BRANCH");
                 userCmd.Parameters.AddWithValue("@merchant_id", dto.merchantId); 
                 userCmd.Parameters.AddWithValue("@branch_id", branchId);
-                userCmd.Parameters.AddWithValue("@status", "SUCCESS");
+                userCmd.Parameters.AddWithValue("@status", "ACTIVE");
 
                 await userCmd.ExecuteNonQueryAsync();
 
