@@ -244,6 +244,8 @@ Configured via **`API_BASE_URL`** → `AxpigeonApi:BaseUrl` (e.g. `http://localh
 
 **Payload:** camelCase JSON (`brandName`, `messageHash`, `senderId`, `isSendNow`, etc.). Message body is **encrypted** before send (`EncryptUtil.EncryptMessage`).
 
+**Rate limiting:** Enforced only in `axpigeonapi` (Redis + Bucket4j). HTTP **429** / error code **`16`** is mapped in `Utils/ApiErrorUtil`. This merchant app does not use Redis. Details: `axpigeonapi/document/REDIS_RATE_LIMITING.md`.
+
 ### 5.3 Authentication model (this app)
 
 ```mermaid

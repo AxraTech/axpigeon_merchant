@@ -28,6 +28,7 @@ namespace AxpigeonApp.Utils
                     "08" => $"Merchant account disabled: {err.message}",
                     "09" => $"Branch suspended or disabled: {err.message}",
                     "11" => $"Account is read-only: {err.message}",
+                    "16" => $"Rate limit exceeded: {err.message}",
                     "10" => err.message,
                     "05" => err.message,
                     _ => err.message
